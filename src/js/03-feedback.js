@@ -1,33 +1,35 @@
 const throttle = require("lodash.throttle");
-
+const KEY = "feedback-form-state";
 let formEl = document.querySelector('.feedback-form');
-let emailEl = formEl.querySelector('input[name="email"]');
-let messageEl = formEl.querySelector('textarea[name="message"]');
 let feedback = {};
 
-if (localStorage.getItem("feedback-form-state")) {
+window.addEventListener('load', onLoad);
+
+function onLoad () {
     try {
-        let feedbackJSON = localStorage.getItem("feedback-form-state");
-    feedback = JSON.parse(feedbackJSON);
-    emailEl.value = feedback.email;
-    messageEl.value = feedback.message;
-      } catch (error) {
-        console.error("Error!")
+        const data = localStorage.getItem(KEY);
+        if (!data) return;
+        feedback = JSON.parse(data);
+        Object.entries(feedback).forEach(([key, val]) => {
+            formEl.elements[key].value = val;
+        })
+    } catch (error) {
+        console.error(error.message);
       }
 }
 
-function getFeedback() {
-    feedback.email = emailEl.value;
-    feedback.message = messageEl.value;
+function getFeedback({target}) {
+    feedback[target.name] = target.value.trim();
     let feedbackJSON = JSON.stringify(feedback);
-    localStorage.setItem("feedback-form-state", feedbackJSON);
+    localStorage.setItem(KEY, feedbackJSON);
 }
 
 function onSubmitBtn(event) {
     event.preventDefault();
     console.log(feedback);
-    formEl.reset();
-    localStorage.removeItem("feedback-form-state");
+    feedback = {};
+    event.target.reset();
+    localStorage.removeItem(KEY);
 }
 
 formEl.addEventListener('input', throttle(getFeedback, 500));
